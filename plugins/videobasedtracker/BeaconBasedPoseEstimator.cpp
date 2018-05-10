@@ -184,11 +184,11 @@ namespace vbtracker {
         bool result = false;
         if (!m_gotPose || !m_gotPrev || !m_permitKalman) {
             // Must use the direct approach
-            result = m_pnpransacEstimator(leds);
+            result = m_pnpransacEstimator(leds); // 用 pnp ransac
         } else {
             auto dt = osvrTimeValueDurationSeconds(&tv, &m_prev);
             // Can use kalman approach
-            result = m_kalmanAutocalibEstimator(leds, dt);
+            result = m_kalmanAutocalibEstimator(leds, dt); // 用 kalman 
             usedKalman = true;
         }
 
@@ -202,11 +202,11 @@ namespace vbtracker {
 
         //==============================================================
         // Put into OSVR format.
-        outPose = GetState();
+        outPose = GetState(); // 送出 pose
         if (usedKalman) {
             auto currentTime = util::time::getNow();
             auto dt2 = osvrTimeValueDurationSeconds(&currentTime, &tv);
-            outPose = GetPredictedState(dt2 + m_params.additionalPrediction);
+            outPose = GetPredictedState(dt2 + m_params.additionalPrediction); // 如果有 kalman, 送出 kalman 的預測 pose
         }
         return true;
     }

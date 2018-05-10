@@ -132,7 +132,7 @@ namespace vbtracker {
         const auto maxSquaredResidual =
             m_params.maxResidual * m_params.maxResidual;
         const auto maxZComponent = m_params.maxZComponent;
-        kalman::predict(m_state, m_model, dt);
+        kalman::predict(m_state, m_model, dt); // kalman 預測
 
         /// @todo should we be recalculating this for each beacon after each
         /// correction step? The order we filter them in is rather arbitrary...
@@ -140,7 +140,7 @@ namespace vbtracker {
             Eigen::Matrix3d(m_state.getCombinedQuaternion());
         auto numBad = std::size_t{0};
         auto numGood = std::size_t{0};
-        for (auto &led : leds) {
+        for (auto &led : leds) { // 對每個 led 作修正
             if (!led.identified()) {
                 continue;
             }
@@ -165,7 +165,7 @@ namespace vbtracker {
             // error.
             double zComponent =
                 (rotate * cvToVector(m_beaconEmissionDirection[id])).z();
-            if (zComponent > 0.) {
+            if (zComponent > 0.) { // 檢查 led 的角度射線, 把不是面向 camera 的 led 踢掉 (跟 camera 同方向的 led 應該是不會被認出來的, 所以踢掉)
                 if (m_params.extraVerbose) {
                     std::cout << "Rejecting an LED at " << led.getLocation()
                               << " claiming ID " << led.getOneBasedID()
@@ -180,7 +180,7 @@ namespace vbtracker {
                 /// ourselves?
                 numBad++;
                 continue;
-            } else if (zComponent > maxZComponent) {
+            } else if (zComponent > maxZComponent) { // 朝向 camera 但太斜的 led 也不處理
                 /// LED is too askew of the camera to provide reliable data, so
                 /// skip it.
                 continue;
@@ -210,11 +210,11 @@ namespace vbtracker {
 
             /// Stick a little bit of process model uncertainty in the beacon,
             /// if it's meant to have some
-            if (m_beaconFixed[id]) {
+            if (m_beaconFixed[id]) { // TODO 了解為什麼要這樣做
                 beaconProcess.setNoiseAutocorrelation(0);
             } else {
                 beaconProcess.setNoiseAutocorrelation(
-                    m_params.beaconProcessNoise);
+                    m_params.beaconProcessNoise); // set Q
                 kalman::predict(*(m_beacons[id]), beaconProcess, dt);
             }
 
@@ -244,7 +244,7 @@ namespace vbtracker {
             /// Now, do the correction.
             auto model =
                 kalman::makeAugmentedProcessModel(m_model, beaconProcess);
-            kalman::correct(state, model, meas);
+            kalman::correct(state, model, meas); // kalman 修正
             m_gotMeasurement = true;
         }
 
